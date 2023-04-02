@@ -69,7 +69,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
     let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=&email=ursula_le_guin%40gmail.com", "empty name"),
-        ("name=Ursula&email=urusla_le_guin%40gmail.com", "empty mail"),
+        ("name=Ursula&email=", "empty mail"),
         ("name=Ursula&email=definately_not_an_email", "invalid_email"),
     ];
     for (body, description) in test_cases {
