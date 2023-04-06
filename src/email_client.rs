@@ -17,7 +17,7 @@ impl EmailClient {
         timeout: std::time::Duration,
     ) -> Self {
         let http_client = Client::builder().timeout(timeout).build().unwrap();
-        let base_url = Url::parse(&base_url).expect(&format!("Could not parse {}", base_url));
+        let base_url = Url::parse(&base_url).expect("Could not parse base_url");
         Self {
             http_client,
             base_url,
