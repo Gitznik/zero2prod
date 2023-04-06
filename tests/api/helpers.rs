@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use reqwest::Url;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
@@ -18,8 +19,20 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 });
 
 pub struct TestApp {
-    pub address: String,
+    pub address: Url,
     pub db_pool: PgPool,
+}
+
+impl TestApp {
+    pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(self.address.join("subscriptions").unwrap())
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
 }
 
 pub async fn spawn_app() -> TestApp {
@@ -36,7 +49,7 @@ pub async fn spawn_app() -> TestApp {
     let application = Application::build(configuration.clone())
         .await
         .expect("Failed to build application");
-    let address = format!("http://127.0.0.1:{}", application.port());
+    let address = Url::parse(&format!("http://127.0.0.1:{}", application.port())).unwrap();
     let _ = tokio::spawn(application.run_until_stopped());
     TestApp {
         address,
