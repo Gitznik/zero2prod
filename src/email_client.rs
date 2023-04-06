@@ -1,10 +1,10 @@
 use crate::domain::SubscriberEmail;
-use reqwest::Client;
+use reqwest::{Client, Url};
 use secrecy::{ExposeSecret, Secret};
 
 pub struct EmailClient {
     http_client: Client,
-    base_url: String,
+    base_url: Url,
     sender: SubscriberEmail,
     authorization_token: Secret<String>,
 }
@@ -17,6 +17,7 @@ impl EmailClient {
         timeout: std::time::Duration,
     ) -> Self {
         let http_client = Client::builder().timeout(timeout).build().unwrap();
+        let base_url = Url::parse(&base_url).expect(&format!("Could not parse {}", base_url));
         Self {
             http_client,
             base_url,
@@ -32,7 +33,10 @@ impl EmailClient {
         html_content: &str,
         text_content: &str,
     ) -> Result<(), reqwest::Error> {
-        let url = format!("{}/email", self.base_url);
+        let url = self
+            .base_url
+            .join("email")
+            .expect("Could not parse this endpoint to base URL");
         let request_body = SendEmailRequest {
             from: self.sender.as_ref(),
             to: recepient.as_ref(),
@@ -41,7 +45,7 @@ impl EmailClient {
             text_body: text_content,
         };
         self.http_client
-            .post(&url)
+            .post(url)
             .header(
                 "X-Postmark-Server-Token",
                 self.authorization_token.expose_secret(),
