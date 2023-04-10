@@ -99,7 +99,7 @@ pub async fn store_token(
     )
     .execute(transaction)
     .await
-    .map_err(|e| StoreTokenError(e))?;
+    .map_err(StoreTokenError)?;
     Ok(())
 }
 
@@ -172,7 +172,7 @@ pub async fn send_confirmation_email(
         confirmation_link.as_str()
     );
     email_client
-        .send_email(new_subscriber.email, "Welcome", &html_body, &plain_body)
+        .send_email(&new_subscriber.email, "Welcome", &html_body, &plain_body)
         .await
 }
 
