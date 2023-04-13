@@ -69,6 +69,21 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
     }
+
+    pub async fn post_login<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
+        reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .unwrap()
+            .post(self.address.join("login").unwrap())
+            .form(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
 }
 
 pub struct TestUser {
