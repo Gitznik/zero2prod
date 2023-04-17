@@ -1,3 +1,4 @@
+use rand::distributions::{Alphanumeric, DistString};
 use uuid::Uuid;
 
 use crate::helpers::{assert_is_redirect_to, spawn_app};
@@ -80,4 +81,52 @@ async fn current_password_must_be_valid() {
     // Follow the redirect
     let html_page = app.get_change_password_html().await;
     assert!(html_page.contains("<p><i>The current password is incorrect.</i></p>"));
+}
+
+#[tokio::test]
+async fn new_password_must_be_between_12_and_128_characters() {
+    let app = spawn_app().await;
+    let short_password = Alphanumeric.sample_string(&mut rand::thread_rng(), 11);
+    let long_password = Alphanumeric.sample_string(&mut rand::thread_rng(), 129);
+
+    // Login
+    app.post_login(&serde_json::json!({
+        "username": &app.test_user.username,
+        "password": &app.test_user.password
+    }))
+    .await;
+
+    // Try to change password too short
+    let response = app
+        .post_change_password(&serde_json::json!({
+            "current_password": &app.test_user.password,
+            "new_password": &short_password,
+            "new_password_check": &short_password,
+        }))
+        .await;
+
+    assert_is_redirect_to(&response, "/admin/password");
+
+    // Follow the redirect
+    let html_page = app.get_change_password_html().await;
+    assert!(html_page.contains(
+        "<p><i>The new password is too short. Must be between 12 and 128 characters.</i></p>"
+    ));
+
+    // Try to change password too long
+    let response = app
+        .post_change_password(&serde_json::json!({
+            "current_password": &app.test_user.password,
+            "new_password": &long_password,
+            "new_password_check": &long_password,
+        }))
+        .await;
+
+    assert_is_redirect_to(&response, "/admin/password");
+
+    // Follow the redirect
+    let html_page = app.get_change_password_html().await;
+    assert!(html_page.contains(
+        "<p><i>The new password is too long. Must be between 12 and 128 characters.</i></p>"
+    ));
 }
