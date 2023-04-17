@@ -129,6 +129,14 @@ impl TestApp {
             .await
             .expect("Failed to execute request")
     }
+
+    pub async fn post_logout(&self) -> reqwest::Response {
+        self.api_client
+            .post(self.address.join("/admin/logout").unwrap())
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
 }
 
 pub struct TestUser {
