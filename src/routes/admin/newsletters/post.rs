@@ -3,7 +3,6 @@ use anyhow::Context;
 use reqwest::{header, StatusCode};
 use sqlx::PgPool;
 
-use crate::authentication::UserId;
 use crate::routes::error_chain_fmt;
 use crate::{domain::SubscriberEmail, email_client::EmailClient};
 
@@ -45,15 +44,12 @@ pub struct BodyData {
     text: String,
 }
 
-#[tracing::instrument(name="Publish a newsletter issue", skip(body, pool, email_client), fields(user_id=tracing::field::Empty))]
+#[tracing::instrument(name = "Publish a newsletter issue", skip(body, pool, email_client))]
 pub async fn publish_newsletter(
     body: web::Form<BodyData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
-    user_id: web::ReqData<UserId>,
 ) -> Result<HttpResponse, PublishError> {
-    let user_id = user_id.into_inner();
-    tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
     let subscribers = get_confirmed_subscribers(&pool).await?;
     for subscriber in subscribers {
         match subscriber {
