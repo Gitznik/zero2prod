@@ -61,11 +61,13 @@ impl TestApp {
         ConfirmationLinks { html, plain_text }
     }
 
-    pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
+    pub async fn post_newsletters<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
         self.api_client
-            .post(self.address.join("newsletters").unwrap())
-            .basic_auth(&self.test_user.username, Some(&self.test_user.password))
-            .json(&body)
+            .post(self.address.join("/admin/newsletters").unwrap())
+            .form(&body)
             .send()
             .await
             .expect("Failed to execute request.")
@@ -133,6 +135,18 @@ impl TestApp {
     pub async fn post_logout(&self) -> reqwest::Response {
         self.api_client
             .post(self.address.join("/admin/logout").unwrap())
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn post_newsletter_issue<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
+        self.api_client
+            .post(self.address.join("/admin/newsletters").unwrap())
+            .form(&body)
             .send()
             .await
             .expect("Failed to execute request.")
