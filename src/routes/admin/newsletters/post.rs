@@ -1,12 +1,13 @@
 use actix_web::{web, HttpResponse};
+use actix_web_flash_messages::FlashMessage;
 use anyhow::Context;
 use sqlx::PgPool;
 
-use crate::utils::e500;
+use crate::utils::{e500, see_other};
 use crate::{domain::SubscriberEmail, email_client::EmailClient};
 
 #[derive(serde::Deserialize)]
-pub struct BodyData {
+pub struct FormData {
     title: String,
     html: String,
     text: String,
@@ -14,7 +15,7 @@ pub struct BodyData {
 
 #[tracing::instrument(name = "Publish a newsletter issue", skip(body, pool, email_client))]
 pub async fn publish_newsletter(
-    body: web::Form<BodyData>,
+    body: web::Form<FormData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -38,7 +39,8 @@ pub async fn publish_newsletter(
             }
         }
     }
-    Ok(HttpResponse::Ok().finish())
+    FlashMessage::info("The newsletter issue has been published!").send();
+    Ok(see_other("/admin/newsletters"))
 }
 
 struct ConfirmedSubscriber {

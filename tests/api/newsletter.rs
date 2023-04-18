@@ -28,8 +28,10 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
     });
 
     let response = app.post_newsletters(&newsletter_request_body).await;
+    assert_is_redirect_to(&response, "/admin/newsletters");
 
-    assert_eq!(response.status().as_u16(), 200);
+    let html_page = app.get_newsletters_html().await;
+    assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"))
 }
 
 #[tokio::test]
@@ -56,8 +58,10 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
         "html": "<p>Newsletter body as HTML</p>",
     });
     let response = app.post_newsletters(&newsletter_request_body).await;
+    assert_is_redirect_to(&response, "/admin/newsletters");
 
-    assert_eq!(response.status().as_u16(), 200);
+    let html_page = app.get_newsletters_html().await;
+    assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"))
 }
 
 #[tokio::test]
@@ -65,7 +69,7 @@ async fn must_be_logged_in_to_post_newsletter_issue() {
     let app = spawn_app().await;
     let newsletter_request_body = serde_json::json!({});
 
-    let response = app.post_newsletter_issue(&newsletter_request_body).await;
+    let response = app.post_newsletters(&newsletter_request_body).await;
     assert_is_redirect_to(&response, "/login");
 }
 

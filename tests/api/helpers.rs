@@ -73,6 +73,18 @@ impl TestApp {
             .expect("Failed to execute request.")
     }
 
+    pub async fn get_newsletters(&self) -> reqwest::Response {
+        self.api_client
+            .get(self.address.join("/admin/newsletters").unwrap())
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_newsletters_html(&self) -> String {
+        self.get_newsletters().await.text().await.unwrap()
+    }
+
     pub async fn post_login<Body>(&self, body: &Body) -> reqwest::Response
     where
         Body: serde::Serialize,
@@ -135,18 +147,6 @@ impl TestApp {
     pub async fn post_logout(&self) -> reqwest::Response {
         self.api_client
             .post(self.address.join("/admin/logout").unwrap())
-            .send()
-            .await
-            .expect("Failed to execute request.")
-    }
-
-    pub async fn post_newsletter_issue<Body>(&self, body: &Body) -> reqwest::Response
-    where
-        Body: serde::Serialize,
-    {
-        self.api_client
-            .post(self.address.join("/admin/newsletters").unwrap())
-            .form(&body)
             .send()
             .await
             .expect("Failed to execute request.")
